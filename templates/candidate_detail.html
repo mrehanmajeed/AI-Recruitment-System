@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+
+<div class="row">
+    <!-- Left Column: Candidate Info -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title">{{ c.name or "Unknown Candidate" }}</h4>
+                <p class="text-muted mb-1"><i class="bi bi-envelope"></i> {{ c.email }}</p>
+                {% if c.phone %}<p class="text-muted"><i class="bi bi-telephone"></i> {{ c.phone }}</p>{% endif %}
+                <hr>
+                <h6>Applied For</h6>
+                <p>{{ job.title if job else "Unknown Role" }}</p>
+                
+                <h6>Current Role</h6>
+                <p>{{ c.parsed_current_role or "N/A" }}</p>
+                
+                <h6>Experience</h6>
+                <p>{{ c.parsed_experience_years }} years</p>
+                
+                <h6>Skills</h6>
+                <div class="mb-3">
+                    {% for skill in skills %}
+                        <span class="badge bg-light text-dark border">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+                
+                <h6>Education</h6>
+                <ul class="list-unstyled">
+                    {% for edu in education %}
+                        <li><strong>{{ edu.degree }}</strong><br><small>{{ edu.institution }} ({{ edu.year }})</small></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: AI Evaluation -->
+    <div class="col-md-8">
+        <div class="score-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="m-0">AI Evaluation</h5>
+                {% if c.ai_tier %}
+                    <span class="badge bg-dark fs-6">{{ c.ai_tier|upper }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="row align-items-center mb-4">
+                <div class="col-auto text-center pe-4">
+                    <div class="score-number {% if c.ai_score and c.ai_score >= 70 %}text-success{% elif c.ai_score and c.ai_score >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ c.ai_score|int if c.ai_score is not none else "-" }}
+                    </div>
+                    <small class="text-muted">/ 100</small>
+                </div>
+                <div class="col">
+                    <p class="mb-0 fs-5">{{ c.ai_reasoning or "Scoring pending or failed." }}</p>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Strengths</h6>
+                    <ul class="list-group list-group-flush mb-3">
+                        {% for s in strengths %}
+                            <li class="list-group-item bg-transparent px-0 border-0 py-1"><i class="bi bi-check text-success"></i> {{ s }}</li>
+                        {% else %}
+                            <li class="list-group-item bg-transparent px-0 border-0 py-1 text-muted">No strengths identified.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Concerns</h6>
+                    <ul class="list-group list-group-flush mb-3">
+                        {% for concern in concerns %}
+                            <li class="list-group-item bg-transparent px-0 border-0 py-1"><i class="bi bi-exclamation-circle text-warning"></i> {{ concern }}</li>
+                        {% else %}
+                            <li class="list-group-item bg-transparent px-0 border-0 py-1 text-muted">No concerns identified.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {% if questions %}
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Suggested Interview Questions</h6>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0 ps-3">
+                    {% for q in questions %}
+                        <li class="mb-2">{{ q }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body d-flex justify-content-between align-items-center bg-light">
+                <div>
+                    <strong>Status:</strong> 
+                    <span class="text-uppercase mx-2">{{ c.status }}</span>
+                    <small class="text-muted">({{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' }})</small>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" id="rescoreBtn" data-id="{{ c.id }}">
+                    <i class="bi bi-arrow-repeat"></i> Rescore
+                </button>
+            </div>
+        </div>
+        {% if c.error_log %}
+        <div class="alert alert-danger mt-3">
+            <strong>Error Log:</strong> {{ c.error_log }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('rescoreBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const cid = btn.getAttribute('data-id');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Rescoring...';
+    try {
+        const response = await fetch(`/api/candidates/${cid}/rescore`);
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to rescore candidate');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Rescore';
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error rescoring candidate');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Rescore';
+    }
+});
+</script>
+{% endblock %}

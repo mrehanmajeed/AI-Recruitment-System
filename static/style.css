@@ -1,0 +1,26 @@
+body {
+    background-color: #f8f9fa;
+}
+.badge-top {
+    background-color: #198754;
+    color: white;
+}
+.badge-mid {
+    background-color: #ffc107;
+    color: black;
+}
+.badge-reject {
+    background-color: #dc3545;
+    color: white;
+}
+.score-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.score-number {
+    font-size: 3rem;
+    font-weight: bold;
+}

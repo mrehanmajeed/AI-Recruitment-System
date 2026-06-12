@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: sans-serif; background-color: #f4f5f7; margin: 0; padding: 40px 0;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h2 style="color: #0d2b4d; text-align: center; margin-top: 0;">{{ FIRM_NAME }}</h2>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <h3 style="color: #198754; text-align: center; font-size: 24px;">🎉 You've been shortlisted!</h3>
+        
+        <p>Dear {{ name.split()[0] if name else "Applicant" }},</p>
+        <p>Congratulations! We were highly impressed with your background and would like to invite you to an interview for the <strong>{{ job_title }}</strong> position.</p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="{{ calendly_link }}" style="background-color: #0d6efd; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Schedule Your Interview</a>
+        </div>
+        
+        <p>If you have any questions before the interview, please don't hesitate to reply to this email.</p>
+        
+        <p style="margin-top: 30px;">Warm regards,<br><strong>The {{ FIRM_NAME }} Team</strong></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Dashboard</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createJobModal">
+        <i class="bi bi-plus-circle"></i> Create Job
+    </button>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total</h5>
+                <h2 class="card-text">{{ stats.total }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Pending</h5>
+                <h2 class="card-text text-warning">{{ stats.pending }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Invited</h5>
+                <h2 class="card-text text-success">{{ stats.invited }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Rejected</h5>
+                <h2 class="card-text text-danger">{{ stats.rejected }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Errors</h5>
+                <h2 class="card-text text-secondary">{{ stats.error_count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Jobs Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Active Job Postings</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for job in jobs %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ job.title }}</strong>
+                        <br><small class="text-muted">Created: {{ job.created_at.strftime('%Y-%m-%d %H:%M') if job.created_at else '' }}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-job-btn" data-job-id="{{ job.id }}">Delete</button>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">No active job postings.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Candidates Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Job</th>
+                        <th>Score</th>
+                        <th>Tier</th>
+                        <th>Status</th>
+                        <th>Applied</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in candidates %}
+                    <tr>
+                        <td>
+                            <strong>{{ c.name or "N/A" }}</strong><br>
+                            <small class="text-muted">{{ c.email }}</small>
+                        </td>
+                        <td>{{ c.job.title if c.job else "N/A" }}</td>
+                        <td>
+                            {% if c.ai_score is not none %}
+                                {% set badge_class = "success" if c.ai_score >= 70 else ("warning" if c.ai_score >= 50 else "danger") %}
+                                <span class="badge bg-{{ badge_class }} fs-6">{{ c.ai_score|int }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.ai_tier %}
+                                <span class="badge bg-dark">{{ c.ai_tier|upper }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.status == 'invited' %}
+                                <span class="badge bg-success">Invited</span>
+                            {% elif c.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif c.status == 'error' %}
+                                <span class="badge bg-secondary">Error</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Processing</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="/candidate/{{ c.id }}" class="btn btn-sm btn-outline-primary">View</a>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary candidate-actions-btn"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        aria-label="Candidate actions for {{ c.name or c.email }}"
+                                    >
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <button
+                                                type="button"
+                                                class="dropdown-item text-danger delete-candidate-btn"
+                                                data-candidate-id="{{ c.id }}"
+                                                data-candidate-name="{{ c.name or c.email }}"
+                                            >
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No candidates found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Job Modal -->
+<div class="modal fade" id="createJobModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Job Posting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createJobForm">
+                    <div class="mb-3">
+                        <label class="form-label">Job Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Full Description</label>
+                        <textarea class="form-control" name="description" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Create</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('createJobForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+        const response = await fetch('/api/jobs', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to create job');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error creating job');
+    }
+});
+
+async function deleteJob(jobId) {
+    if (!confirm('Are you sure you want to delete this job posting?')) return;
+
+    const id = Number(jobId);
+    if (!Number.isInteger(id)) {
+        alert('Invalid job posting id');
+        return;
+    }
+
+    try {
+        let response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+        if (response.status === 404 || response.status === 405) {
+            response = await fetch(`/api/jobs/${id}/delete`, { method: 'POST' });
+        }
+
+        if (response.ok) {
+            window.location.reload();
+            return;
+        }
+
+        const err = await response.json().catch(() => ({}));
+        const detail = err.detail;
+        const message = typeof detail === 'string'
+            ? detail
+            : Array.isArray(detail)
+                ? detail.map((item) => item.msg).join(', ')
+                : 'Failed to delete job posting';
+        alert(message);
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting job posting. Make sure the server is running at http://localhost:8000');
+    }
+}
+
+document.querySelectorAll('.delete-job-btn').forEach((btn) => {
+    btn.addEventListener('click', () => deleteJob(btn.dataset.jobId));
+});
+
+async function deleteCandidate(candidateId, candidateName) {
+    const label = candidateName ? `"${candidateName}"` : 'this candidate';
+    if (!confirm(`Are you sure you want to delete ${label}? This cannot be undone.`)) return;
+
+    const id = Number(candidateId);
+    if (!Number.isInteger(id)) {
+        alert('Invalid candidate id');
+        return;
+    }
+
+    try {
+        let response = await fetch(`/api/candidates/${id}`, { method: 'DELETE' });
+        if (response.status === 404 || response.status === 405) {
+            response = await fetch(`/api/candidates/${id}/delete`, { method: 'POST' });
+        }
+
+        if (response.ok) {
+            window.location.reload();
+            return;
+        }
+
+        const err = await response.json().catch(() => ({}));
+        const detail = err.detail;
+        const message = typeof detail === 'string'
+            ? detail
+            : Array.isArray(detail)
+                ? detail.map((item) => item.msg).join(', ')
+                : 'Failed to delete candidate';
+        alert(message);
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting candidate. Make sure the server is running at http://localhost:8000');
+    }
+}
+
+document.querySelectorAll('.delete-candidate-btn').forEach((btn) => {
+    btn.addEventListener('click', () => deleteCandidate(btn.dataset.candidateId, btn.dataset.candidateName));
+});
+</script>
+{% endblock %}
